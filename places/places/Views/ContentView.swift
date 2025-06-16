@@ -7,29 +7,40 @@ struct ContentView: View {
     @State private var regionIsSet = false
     @State private var isAddingLocation = false
     @State private var selectedLocation: Location? = nil
+    @State private var newLocationName: String = ""
+    @State private var showAddLocationSheet = false
 
     var body: some View {
         NavigationView {
             VStack {
-                Map(coordinateRegion: $mapRegion, annotationItems: service.locations.compactMap { loc in
-                    (loc.latitude != nil && loc.longitude != nil) ? loc : nil
-                } + [Location(name: "Current Location", latitude: nil, longitude: nil)]) { location in
-                    MapAnnotation(coordinate: CLLocationCoordinate2D(
-                        latitude: location.latitude!,
-                        longitude: location.longitude!
-                    )) {
-                       markerView(for: location)
+                ZStack {
+                    Map(coordinateRegion: $mapRegion, annotationItems: service.locations.compactMap { loc in
+                        (loc.latitude != nil && loc.longitude != nil) ? loc : nil
+                    }) { location in
+                        MapAnnotation(coordinate: CLLocationCoordinate2D(
+                            latitude: location.latitude!,
+                            longitude: location.longitude!
+                        )) {
+                            markerView(for: location)
+                        }
                     }
-                }
-                .frame(height: 250)
-                .onAppear {
-                    fitAllLocations()
-                }
-                .onChange(of: service.locations) {
-                    fitAllLocations()
+                    .frame(height: 250)
+                    .onAppear {
+                        fitAllLocations()
+                    }
+                    .onChange(of: service.locations) {
+                        fitAllLocations()
+                    }
+                    // Center marker overlay
+                    markerCenterContent()
+                        //.frame(width: 44, height: 44)
+                        //.allowsHitTesting(false)
                 }
 
                 List(service.locations) { location in
+
+
+
                     Button(action: {
                         selectedLocation =  location
                     }) {
@@ -56,6 +67,31 @@ struct ContentView: View {
                 .background(Color("ABN Light Gray"))
                 .accessibilityIdentifier("locationList")
             }
+            .sheet(isPresented: $showAddLocationSheet) {
+                VStack(spacing: 20) {
+                    Text("Add New Location")
+                        .font(.headline)
+                    TextField("Name", text: $newLocationName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                    HStack {
+                        Button("Cancel") {
+                            showAddLocationSheet = false
+                        }
+                        Spacer()
+                        Button("Add") {
+                            let center = mapRegion.center
+                            let newLoc = Location(name: newLocationName, latitude: center.latitude, longitude: center.longitude)
+                            service.locations.append(newLoc)
+                            showAddLocationSheet = false
+                        }
+                        .disabled(newLocationName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding([.leading, .trailing, .bottom])
+                }
+                .padding()
+                .presentationDetents([.medium])
+            }
             .navigationTitle("Places")
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
@@ -71,6 +107,7 @@ struct ContentView: View {
 
                         Button(action: {
                             print("Add tapped")
+                            showAddLocationSheet = true
                             isAddingLocation = false
                         }) {
                             Text("Done")
@@ -85,12 +122,6 @@ struct ContentView: View {
                                 .foregroundColor(Color("ABN Green"))
                         }
                     }
-
-                    /*Button(action: {
-                        print("Settings tapped")
-                    }) {
-                        Image(systemName: "gear")
-                    }*/
                 }
             }
             .task {
@@ -126,19 +157,20 @@ struct ContentView: View {
 
     @ViewBuilder
     func markerCenterContent() -> some View {
+        if isAddingLocation {
+            VStack(spacing: 5) {
+                Text("New location")
+                    .font(.caption)
+                    .padding(5)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(8)
+                    .shadow(radius: 3)
 
-                VStack(spacing: 5) {
-                    Text("Center Marker")
-                        .font(.caption)
-                        .padding(5)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(8)
-                        .shadow(radius: 3)
-
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title)
-                        .foregroundColor(.blue)
-                }
+                Image(systemName: "plus.circle.fill")
+                    .font(.title)
+                    .foregroundColor(Color("ABN Teal"))
+            }
+        }
     }
 
     private func openWikipedia(for query: Location) {
