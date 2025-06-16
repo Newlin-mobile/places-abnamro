@@ -11,7 +11,7 @@ class LocationService: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let wrapper = try JSONDecoder().decode(LocationsWrapper.self, from: data)
-            let locations = wrapper.locations.filter { $0.name != nil }
+            let locations = wrapper.locations
             self.locations = locations
         } catch {
             self.errorMessage = ErrorWrapper(message: "Failed to fetch locations: \(error.localizedDescription)", underlyingError: error)
