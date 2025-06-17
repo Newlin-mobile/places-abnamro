@@ -3,8 +3,8 @@ import Foundation
 public struct Location: Identifiable, Codable, Equatable {
     public let id = UUID()
     let name: String?
-    let latitude: Double?
-    let longitude: Double?
+    let latitude: Double
+    let longitude: Double
 
     enum CodingKeys: String, CodingKey {
         case name
