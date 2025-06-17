@@ -1,7 +1,7 @@
 import Foundation
 
-struct Location: Identifiable, Codable, Equatable {
-    let id = UUID()
+public struct Location: Identifiable, Codable, Equatable {
+    public let id = UUID()
     let name: String?
     let latitude: Double?
     let longitude: Double?
@@ -13,6 +13,6 @@ struct Location: Identifiable, Codable, Equatable {
     }
 }
 
-struct LocationsWrapper: Codable {
+public struct LocationsWrapper: Codable {
     let locations: [Location]
 }

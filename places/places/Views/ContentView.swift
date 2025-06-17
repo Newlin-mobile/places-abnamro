@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var selectedLocation: Location? = nil
     @State private var newLocationName: String = ""
     @State private var showAddLocationSheet = false
+    @FocusState private var isNameFieldFocused: Bool
 
     var body: some View {
         NavigationView {
@@ -37,60 +38,52 @@ struct ContentView: View {
                         //.allowsHitTesting(false)
                 }
 
-                List(service.locations) { location in
-
-
-
-                    Button(action: {
-                        selectedLocation =  location
-                    }) {
-                        HStack() {
-
-                            Text(location.name ?? "Unknown Location")
-                                .font(.headline)
-
-                            Spacer()
-
-                            if (location == selectedLocation) {
-                                Button("Open in Wikipedia", action: {
-                                    print("Tapped on \(location.name ?? "Unknown")")
-                                    openWikipedia(for: location)
-                                }).foregroundColor(Color("ABN Teal"))
-
-                                Image(systemName: "chevron.right")
+                List {
+                    ForEach(service.locations) { location in
+                        Button(action: {
+                            selectedLocation = location
+                            if let lat = location.latitude, let lon = location.longitude {
+                                withAnimation {
+                                    mapRegion = MKCoordinateRegion(
+                                        center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                                        span: MKCoordinateSpan(latitudeDelta: 5.0, longitudeDelta: 5.0)
+                                    )
+                                }
                             }
-
+                        }) {
+                            HStack() {
+                                Text(location.name ?? "Unknown Location")
+                                    .font(.headline)
+                                Spacer()
+                                if (location == selectedLocation) {
+                                    Button("Open in Wikipedia", action: {
+                                        print("Tapped on \(location.name ?? "Unknown")")
+                                        openWikipedia(for: location)
+                                    }).foregroundColor(Color("ABN Teal"))
+                                    Image(systemName: "chevron.right")
+                                }
+                            }
                         }
                     }
+                    .onDelete(perform: deleteLocations)
                 }
                 .listStyle(.plain)
                 .background(Color("ABN Light Gray"))
                 .accessibilityIdentifier("locationList")
             }
             .sheet(isPresented: $showAddLocationSheet) {
-                VStack(spacing: 20) {
-                    Text("Add New Location")
-                        .font(.headline)
-                    TextField("Name", text: $newLocationName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                    HStack {
-                        Button("Cancel") {
-                            showAddLocationSheet = false
-                        }
-                        Spacer()
-                        Button("Add") {
-                            let center = mapRegion.center
-                            let newLoc = Location(name: newLocationName, latitude: center.latitude, longitude: center.longitude)
-                            service.locations.append(newLoc)
-                            showAddLocationSheet = false
-                        }
-                        .disabled(newLocationName.trimmingCharacters(in: .whitespaces).isEmpty)
+                AddLocationSheet(
+                    newLocationName: $newLocationName,
+                    onAdd: {
+                        let center = mapRegion.center
+                        let newLoc = Location(name: newLocationName, latitude: center.latitude, longitude: center.longitude)
+                        service.locations.append(newLoc)
+                        showAddLocationSheet = false
+                    },
+                    onCancel: {
+                        showAddLocationSheet = false
                     }
-                    .padding([.leading, .trailing, .bottom])
-                }
-                .padding()
-                .presentationDetents([.medium])
+                )
             }
             .navigationTitle("Places")
             .toolbar {
@@ -107,6 +100,7 @@ struct ContentView: View {
 
                         Button(action: {
                             print("Add tapped")
+                            newLocationName = ""
                             showAddLocationSheet = true
                             isAddingLocation = false
                         }) {
@@ -135,6 +129,10 @@ struct ContentView: View {
         }
     }
 
+    func deleteLocations(at offsets: IndexSet) {
+        service.locations.remove(atOffsets: offsets)
+    }
+
     @ViewBuilder
     func markerView(for location: Location) -> some View {
         VStack(spacing: 5) {
@@ -147,7 +145,7 @@ struct ContentView: View {
 
             Image(systemName: location == selectedLocation ? "mappin.circle.fill" : "mappin")
                 .font(.title)
-                .foregroundColor(Color("ABNTeal"))
+                .foregroundColor(Color("ABN Teal"))
         }
         .onTapGesture {
             print("Tapped on \(location.name ?? "Unknown")")
@@ -157,9 +155,9 @@ struct ContentView: View {
 
     @ViewBuilder
     func markerCenterContent() -> some View {
-        if isAddingLocation {
+        if isAddingLocation || showAddLocationSheet {
             VStack(spacing: 5) {
-                Text("New location")
+                Text("Move map for new location")
                     .font(.caption)
                     .padding(5)
                     .background(Color(.systemBackground))
