@@ -34,8 +34,6 @@ struct ContentView: View {
                     }
                     // Center marker overlay
                     markerCenterContent()
-                        //.frame(width: 44, height: 44)
-                        //.allowsHitTesting(false)
                 }
 
                 List {
@@ -59,7 +57,7 @@ struct ContentView: View {
                                     Button("Open in Wikipedia", action: {
                                         print("Tapped on \(location.name ?? "Unknown")")
                                         openWikipedia(for: location)
-                                    }).foregroundColor(Color("ABN Teal"))
+                                    }).foregroundColor(Color(.abnTeal))
                                     Image(systemName: "chevron.right")
                                 }
                             }
@@ -68,7 +66,7 @@ struct ContentView: View {
                     .onDelete(perform: deleteLocations)
                 }
                 .listStyle(.plain)
-                .background(Color("ABN Light Gray"))
+                .background(Color(.abnLightGray))
                 .accessibilityIdentifier("locationList")
             }
             .sheet(isPresented: $showAddLocationSheet) {
@@ -84,28 +82,28 @@ struct ContentView: View {
                         showAddLocationSheet = false
                     }
                 )
+                .onAppear {
+                    newLocationName = ""
+                }
             }
             .navigationTitle("Places")
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     if isAddingLocation {
                         Button(action: {
-                            print("Add tapped")
                             isAddingLocation = false
                         }) {
                             Text("Cancel")
-                                .foregroundColor(Color("ABN Green"))
+                                .foregroundColor(Color(.abnGreen))
 
                         }
 
                         Button(action: {
-                            print("Add tapped")
-                            newLocationName = ""
                             showAddLocationSheet = true
                             isAddingLocation = false
                         }) {
                             Text("Done")
-                                .foregroundColor(Color("ABN Green"))
+                                .foregroundColor(Color(.abnGreen))
                         }
                     } else {
                         Button(action: {
@@ -113,7 +111,7 @@ struct ContentView: View {
                             isAddingLocation = true
                         }) {
                             Image(systemName: "plus")
-                                .foregroundColor(Color("ABN Green"))
+                                .foregroundColor(Color(.abnGreen))
                         }
                     }
                 }
@@ -145,7 +143,7 @@ struct ContentView: View {
 
             Image(systemName: location == selectedLocation ? "mappin.circle.fill" : "mappin")
                 .font(.title)
-                .foregroundColor(Color("ABN Teal"))
+                .foregroundColor(Color(.abnTeal))
         }
         .onTapGesture {
             print("Tapped on \(location.name ?? "Unknown")")
@@ -166,7 +164,7 @@ struct ContentView: View {
 
                 Image(systemName: "plus.circle.fill")
                     .font(.title)
-                    .foregroundColor(Color("ABN Teal"))
+                    .foregroundColor(Color(.abnTeal))
             }
         }
     }
