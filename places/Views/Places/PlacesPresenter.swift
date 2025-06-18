@@ -14,9 +14,7 @@ class PlacesPresenter: PlacesPresentationLogic {
     weak var view: PlacesDisplayLogic?
     
     func presentLocations(_ locations: [Location]) {
-        DispatchQueue.main.async {
-            self.view?.displayLocations(locations)
-        }
+        view?.displayLocations(locations)
     }
     
     func presentError(_ error: ErrorWrapper) {

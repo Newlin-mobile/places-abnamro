@@ -14,27 +14,27 @@ import MapKit
 
 class MockLocationService: LocationServiceProtocol {
     var fetchLocationsCalled = false
-    var result: Result<[Location], Error>?
+    var result: Result<[Location], ErrorWrapper>?
 
-    func fetchLocations() async -> Result<[places.Location], any Error> {
+    func fetchLocations() async -> Result<[Location], ErrorWrapper> {
         fetchLocationsCalled = true
         if let result = result {
             return result
         }
-        return .failure(NSError(domain: "", code: 0, userInfo: nil))
+        return .failure(ErrorWrapper(message: "Unable to fetch locations", underlyingError: NSError(domain: "", code: 0, userInfo: nil)))
     }
 }
 
 class MockPresenter: PlacesPresentationLogic {
     var presentedLocations: [Location]?
-    var presentedError: Error?
+    var presentedError: ErrorWrapper?
     var presentedSelectedLocation: Location?
     var presentedWikipediaLocation: Location?
     
     func presentLocations(_ locations: [Location]) {
         presentedLocations = locations
     }
-    func presentError(_ error: Error) {
+    func presentError(_ error: ErrorWrapper) {
         presentedError = error
     }
     func presentSelectedLocation(_ location: Location?) {
@@ -46,16 +46,16 @@ class MockPresenter: PlacesPresentationLogic {
 }
 
 class MockView: PlacesDisplayLogic {
-    var displayedLocations: PlacesViewModel.Locations?
-    var displayedError: PlacesViewModel.Error?
+    var displayedLocations: [Location]?
+    var displayedError: ErrorWrapper?
     var displayedSelectedLocation: Location?
     var displayedWikipediaLocation: Location?
     
-    func displayLocations(_ viewModel: PlacesViewModel.Locations) {
-        displayedLocations = viewModel
+    func displayLocations(_ locations: [Location]) {
+        displayedLocations = locations
     }
-    func displayError(_ viewModel: PlacesViewModel.Error) {
-        displayedError = viewModel
+    func displayError(_ errorMessage: ErrorWrapper) {
+        displayedError = errorMessage
     }
     func displayOpenWikipedia(for location: Location) {
         displayedWikipediaLocation = location
@@ -87,11 +87,11 @@ struct placesTests {
         let mockPresenter = MockPresenter()
         let interactor = PlacesInteractor(service: mockService)
         interactor.presenter = mockPresenter
-        let error = TestError(msg: "fail")
+        let error = ErrorWrapper(message: "Failed to load locations", underlyingError: TestError(msg: "fail"))
         mockService.result = .failure(error)
         interactor.fetchLocations()
         try await Task.sleep(for: .seconds(1))
-        #expect((mockPresenter.presentedError as? TestError)?.msg == "fail")
+        #expect(mockPresenter.presentedError == error)
     }
 
     @Test func testAddLocation() async throws {
@@ -110,10 +110,10 @@ struct placesTests {
         presenter.view = mockView
         let locations = [Location(name: "Test", latitude: 1, longitude: 2)]
         presenter.presentLocations(locations)
-        #expect(mockView.displayedLocations?.locations == locations)
-        let error = NSError(domain: "", code: 1, userInfo: [NSLocalizedDescriptionKey: "error"])
+        #expect(mockView.displayedLocations == locations)
+        let error = ErrorWrapper(message: "Failed to load locations", underlyingError: NSError(domain: "", code: 1, userInfo: [NSLocalizedDescriptionKey: "error"]))
         presenter.presentError(error)
-        #expect(mockView.displayedError?.message == "error")
+        #expect(mockView.displayedError?.message == "Failed to load locations")
         presenter.presentSelectedLocation(locations[0])
         #expect(mockView.displayedSelectedLocation == locations[0])
         presenter.presentOpenWikipedia(for: locations[0])
