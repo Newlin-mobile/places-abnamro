@@ -15,11 +15,13 @@ import MapKit
 class MockLocationService: LocationServiceProtocol {
     var fetchLocationsCalled = false
     var result: Result<[Location], Error>?
-    func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void) {
+
+    func fetchLocations() async -> Result<[places.Location], any Error> {
         fetchLocationsCalled = true
         if let result = result {
-            completion(result)
+            return result
         }
+        return .failure(NSError(domain: "", code: 0, userInfo: nil))
     }
 }
 
@@ -75,7 +77,7 @@ struct placesTests {
         mockService.result = .success(sampleLocations)
         interactor.fetchLocations()
         // Simulate async
-        try await Task.sleep(nanoseconds: 100_000_000)
+        try await Task.sleep(for: .seconds(1))
         #expect(mockPresenter.presentedLocations == sampleLocations)
     }
     
@@ -88,7 +90,7 @@ struct placesTests {
         let error = TestError(msg: "fail")
         mockService.result = .failure(error)
         interactor.fetchLocations()
-        try await Task.sleep(nanoseconds: 100_000_000)
+        try await Task.sleep(for: .seconds(1))
         #expect((mockPresenter.presentedError as? TestError)?.msg == "fail")
     }
 

@@ -1,6 +1,5 @@
 import Foundation
 import MapKit
-// Ensure Location model is accessible. If needed, import your app module here.
 
 class PlacesInteractor: PlacesBusinessLogic {
     func selectLocation(_ location: Location) {
@@ -23,13 +22,13 @@ class PlacesInteractor: PlacesBusinessLogic {
     }
     
     func fetchLocations() {
-        service.fetchLocations { [weak self] result in
-            switch result {
-            case .success(let locations):
-                self?.locations = locations
-                self?.presenter?.presentLocations(locations)
+        Task {
+            switch await service.fetchLocations() {
+            case .success(let newLocations):
+                locations = newLocations
+                presenter?.presentLocations(newLocations)
             case .failure(let error):
-                self?.presenter?.presentError(error)
+                presenter?.presentError(error)
             }
         }
     }
@@ -39,13 +38,13 @@ class PlacesInteractor: PlacesBusinessLogic {
         locations.append(newLoc)
         presenter?.presentLocations(locations)
         presenter?.presentSelectedLocation(newLoc)
-        // Optionally, persist via service
+        // We could persist the state but not done as part of this assigment
     }
     
     func deleteLocations(at offsets: IndexSet) {
         locations.remove(atOffsets: offsets)
         presenter?.presentLocations(locations)
         presenter?.presentSelectedLocation(nil)
-        // Optionally, persist via service
+        // not persisted
     }
 }

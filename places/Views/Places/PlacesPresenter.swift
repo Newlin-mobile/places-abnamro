@@ -14,12 +14,12 @@ class PlacesPresenter: PlacesPresentationLogic {
     weak var view: PlacesDisplayLogic?
     
     func presentLocations(_ locations: [Location]) {
-        let viewModel = PlacesViewModel.Locations(locations: locations)
-        view?.displayLocations(viewModel)
+        DispatchQueue.main.async {
+            self.view?.displayLocations(locations)
+        }
     }
     
     func presentError(_ error: Error) {
-        let viewModel = PlacesViewModel.Error(message: error.localizedDescription)
-        view?.displayError(viewModel)
+        view?.displayError(error.localizedDescription)
     }
 }

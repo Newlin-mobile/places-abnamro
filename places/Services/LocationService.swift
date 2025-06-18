@@ -1,18 +1,18 @@
 import Foundation
 
 protocol LocationServiceProtocol {
-    func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void)
+    func fetchLocations() async -> Result<[Location], Error>
 }
 
 @MainActor
 class LocationService: ObservableObject, LocationServiceProtocol {
-    @Published var locations: [Location] = []
-    @Published var errorMessage: ErrorWrapper? = nil
+   // @Published var locations: [Location] = []
+  //  @Published var errorMessage: ErrorWrapper? = nil
 
     private let url = URL(string: "https://raw.githubusercontent.com/abnamrocoesd/assignment-ios/main/locations.json")!
 
     // For VIP Clean
-    func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void) {
+   /* func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void) {
         let url = self.url
         Task {
             do {
@@ -28,17 +28,16 @@ class LocationService: ObservableObject, LocationServiceProtocol {
                 }
             }
         }
-    }
+    }*/
 
     // Keep async version for backwards compatibility
-    func fetchLocations() async {
+    func fetchLocations() async -> Result<[Location], Error> {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let wrapper = try JSONDecoder().decode(LocationsWrapper.self, from: data)
-            let locations = wrapper.locations
-            self.locations = locations
+            return Result.success(wrapper.locations)
         } catch {
-            self.errorMessage = ErrorWrapper(message: "Failed to fetch locations: \(error.localizedDescription)", underlyingError: error)
+            return Result.failure(ErrorWrapper(message: "Failed to fetch locations: \(error.localizedDescription)", underlyingError: error))
         }
     }
 }

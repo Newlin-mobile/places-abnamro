@@ -1,16 +1,10 @@
 import SwiftUI
 import MapKit
-// Import Location model if needed
 import Foundation
 
 struct PlacesView: View {
     @ObservedObject var viewModel: ObservablePlacesViewModel
     var interactor: PlacesBusinessLogic
-
-    @State private var showAddLocationSheet = false
-    @State private var newLocationName = ""
-    @State private var isAddingLocation = false
-    @State private var currentMapCenter: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 0, longitude: 0)
 
     private func openWikipedia(for query: Location) {
         let wikiURL = URL(string: "wikipedia://places?WMFLatitude=\(query.latitude)&WMFLongitude=\(query.longitude)")!
@@ -24,7 +18,7 @@ struct PlacesView: View {
                     Map(position: $viewModel.mapCameraPosition) {
                                 mapAnnotations
                             }.onMapCameraChange { context in
-                                currentMapCenter = context.camera.centerCoordinate
+                                viewModel.currentMapCenter = context.camera.centerCoordinate
                             }
                     .frame(height: 250)
                     .onAppear {
@@ -33,7 +27,7 @@ struct PlacesView: View {
                     .onChange(of: viewModel.locations) {
                         viewModel.fitAllLocations()
                     }
-                    if isAddingLocation {
+                    if viewModel.isAddingLocation {
                         markerCenterContent()
                     }
                 }
@@ -70,39 +64,39 @@ struct PlacesView: View {
             .navigationTitle("Places")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if !isAddingLocation {
+                    if !viewModel.isAddingLocation {
                         Button(action: {
-                            isAddingLocation = true
+                            viewModel.isAddingLocation = true
                         }) {
                             Image(systemName: "plus")
                         }
                     } else {
                         HStack {
                             Button("Done") {
-                                showAddLocationSheet = true
+                                viewModel.showAddLocationSheet = true
                             }
                             Button("Cancel") {
-                                isAddingLocation = false
+                                viewModel.isAddingLocation = false
                             }
                         }
                     }
                 }
             }
-            .sheet(isPresented: $showAddLocationSheet) {
+            .sheet(isPresented: $viewModel.showAddLocationSheet) {
                 AddLocationSheet(
-                                    newLocationName: $newLocationName,
+                    newLocationName: $viewModel.newLocationName,
                                     onAdd: {
-                                        interactor.addLocation(name: newLocationName, center: currentMapCenter)
-                                        showAddLocationSheet = false
-                                        isAddingLocation = false
+                                        interactor.addLocation(name: viewModel.newLocationName, center: viewModel.currentMapCenter)
+                                        viewModel.showAddLocationSheet = false
+                                        viewModel.isAddingLocation = false
 
                                     },
                                     onCancel: {
-                                        showAddLocationSheet = false
+                                        viewModel.showAddLocationSheet = false
                                     }
                                 )
                 .padding()
-                .onAppear { newLocationName = "" }
+                .onAppear { viewModel.newLocationName = "" }
             }
         }
         .onAppear {
@@ -173,56 +167,4 @@ struct PlacesView: View {
     }
 }
 
-class ObservablePlacesViewModel: ObservableObject, PlacesDisplayLogic {
-    @Published var locations: [Location] = []
-    @Published var errorMessage: String? = nil
-    @Published var mapRegion: MKCoordinateRegion = MKCoordinateRegion()
 
-    @Published var mapCameraPosition: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 52.3702, longitude: 4.8952), // example: Amsterdam
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-        )
-    )
-    @Published var selectedLocation: Location? = nil
-    @Published var openWikipediaLocation: Location? = nil
-
-    func displayOpenWikipedia(for location: Location) {
-        openWikipediaLocation = location
-    }
-
-    func displayLocations(_ viewModel: PlacesViewModel.Locations) {
-        locations = viewModel.locations
-    }
-
-    func displayError(_ viewModel: PlacesViewModel.Error) {
-        errorMessage = viewModel.message
-    }
-
-    func displaySelectedLocation(_ location: Location?) {
-        self.selectedLocation = location
-    }
-
-    /// Adjusts mapRegion to fit all locations
-    func fitAllLocations() {
-
-        let coords = locations.compactMap { loc -> CLLocationCoordinate2D? in
-            return CLLocationCoordinate2D(latitude: loc.latitude, longitude: loc.longitude)
-                    }
-                    guard !coords.isEmpty else { return }
-                    if coords.count == 1 {
-                        mapRegion = MKCoordinateRegion(center: coords[0], span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1))
-                        return
-                    }
-                    let minLat = coords.map { $0.latitude }.min() ?? 0
-                    let maxLat = coords.map { $0.latitude }.max() ?? 0
-                    let minLon = coords.map { $0.longitude }.min() ?? 0
-                    let maxLon = coords.map { $0.longitude }.max() ?? 0
-                    let center = CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2, longitude: (minLon + maxLon) / 2)
-                    let span = MKCoordinateSpan(latitudeDelta: max(0.1, (maxLat - minLat) * 1.3), longitudeDelta: max(0.1, (maxLon - minLon) * 1.3))
-
-        mapCameraPosition = .region(
-            MKCoordinateRegion(center: center, span: span)
-            )
-    }
-}

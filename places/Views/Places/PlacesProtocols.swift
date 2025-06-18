@@ -18,8 +18,8 @@ protocol PlacesPresentationLogic {
 }
 
 protocol PlacesDisplayLogic: AnyObject {
-    func displayLocations(_ viewModel: PlacesViewModel.Locations)
-    func displayError(_ viewModel: PlacesViewModel.Error)
+    func displayLocations(_ locations: [Location])
+    func displayError(_ errorMessage: String)
     func displayOpenWikipedia(for location: Location)
     func displaySelectedLocation(_ location: Location?)
 }
