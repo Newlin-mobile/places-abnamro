@@ -8,18 +8,20 @@ struct PlacesView: View {
 
     private func openWikipedia(for query: Location) {
         let wikiURL = URL(string: "wikipedia://places?WMFLatitude=\(query.latitude)&WMFLongitude=\(query.longitude)")!
-                UIApplication.shared.open(wikiURL)
-        }
+        UIApplication.shared.open(wikiURL)
+    }
 
     var body: some View {
         NavigationView {
             VStack {
                 ZStack {
                     Map(position: $viewModel.mapCameraPosition) {
-                                mapAnnotations
-                            }.onMapCameraChange { context in
-                                viewModel.currentMapCenter = context.camera.centerCoordinate
-                            }
+                        mapAnnotations
+                    }.onMapCameraChange { context in
+                        viewModel.currentMapCenter = context.camera.centerCoordinate
+                    }
+                    .accessibilityLabel("Map showing all saved locations")
+                    .accessibilityHint("Double-tap to interact with the map or explore locations.")
                     .frame(height: 250)
                     .onAppear {
                         viewModel.fitAllLocations()
@@ -41,6 +43,8 @@ struct PlacesView: View {
                                     Text(location.name ?? "Unknown")
                                     Spacer()
                                 }
+                                .accessibilityLabel(location.name ?? "Unknown location")
+                                .accessibilityHint("Selects this location.")
                             }
                             .contentShape(Rectangle())
                             if viewModel.selectedLocation == location {
@@ -52,8 +56,10 @@ struct PlacesView: View {
                                             .foregroundColor(Color(.abnTeal))
                                         Image(systemName: "chevron.right")
                                             .foregroundColor(.gray)
+                                            .accessibilityHidden(true) // Mark icon as decorative
                                     }
-                                }
+                                }.accessibilityLabel("Open \(location.name ?? "location") in Wikipedia")
+                                    .accessibilityHint("Opens this location in the Wikipedia app.")
                             }
                         }
                     }
@@ -85,19 +91,27 @@ struct PlacesView: View {
             .sheet(isPresented: $viewModel.showAddLocationSheet) {
                 AddLocationSheet(
                     newLocationName: $viewModel.newLocationName,
-                                    onAdd: {
-                                        interactor.addLocation(name: viewModel.newLocationName, center: viewModel.currentMapCenter)
-                                        viewModel.showAddLocationSheet = false
-                                        viewModel.isAddingLocation = false
+                    onAdd: {
+                        interactor.addLocation(name: viewModel.newLocationName, center: viewModel.currentMapCenter)
+                        viewModel.showAddLocationSheet = false
+                        viewModel.isAddingLocation = false
 
-                                    },
-                                    onCancel: {
-                                        viewModel.showAddLocationSheet = false
-                                    }
-                                )
+                    },
+                    onCancel: {
+                        viewModel.showAddLocationSheet = false
+                    }
+                )
                 .padding()
                 .onAppear { viewModel.newLocationName = "" }
             }
+        }.alert(item: $viewModel.errorMessage) { error in
+            Alert(
+                title: Text("Error"),
+                message: Text(error.message),
+                dismissButton: .default(Text("OK")) {
+                    viewModel.errorMessage = nil
+                }
+            )
         }
         .onAppear {
             interactor.fetchLocations()
@@ -112,19 +126,19 @@ struct PlacesView: View {
     }
 
     @MapContentBuilder
-        var mapAnnotations: some MapContent {
-            ForEach(viewModel.locations) { location in
-                Annotation(
-                    "", coordinate: CLLocationCoordinate2D(
-                        latitude: location.latitude,
-                        longitude: location.longitude
-                    ),
-                    anchor: .bottom
-                ) {
-                    annotationButton(for: location)
-                }
+    var mapAnnotations: some MapContent {
+        ForEach(viewModel.locations) { location in
+            Annotation(
+                "", coordinate: CLLocationCoordinate2D(
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                ),
+                anchor: .bottom
+            ) {
+                annotationButton(for: location)
             }
         }
+    }
 
     func annotationButton(for location: Location) -> some View {
         Button(action: {
@@ -134,7 +148,7 @@ struct PlacesView: View {
         }
     }
 
-    
+
     @ViewBuilder
     private func markerView(for location: Location) -> some View {
         VStack(spacing: 5) {
@@ -148,9 +162,10 @@ struct PlacesView: View {
             Image(systemName: viewModel.selectedLocation == location ? "mappin.circle.fill" : "mappin")
                 .font(.title)
                 .foregroundColor(viewModel.selectedLocation == location ? Color(.abnTeal) : Color(.abnDarkGray))
+                .accessibilityHidden(true) // dont use this for voiceover, they can beter use the list
         }
     }
-    
+
     @ViewBuilder
     private func markerCenterContent() -> some View {
         VStack(spacing: 5) {
@@ -163,6 +178,7 @@ struct PlacesView: View {
             Image(systemName: "plus.circle.fill")
                 .foregroundColor(Color(.abnYellow))
                 .font(.title)
+                .accessibilityHidden(true)
         }
     }
 }

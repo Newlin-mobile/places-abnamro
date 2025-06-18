@@ -13,13 +13,13 @@ protocol PlacesBusinessLogic {
 protocol PlacesPresentationLogic {
     func presentOpenWikipedia(for location: Location)
     func presentLocations(_ locations: [Location])
-    func presentError(_ error: Error)
+    func presentError(_ error: ErrorWrapper)
     func presentSelectedLocation(_ location: Location?)
 }
 
 protocol PlacesDisplayLogic: AnyObject {
     func displayLocations(_ locations: [Location])
-    func displayError(_ errorMessage: String)
+    func displayError(_ errorMessage: ErrorWrapper)
     func displayOpenWikipedia(for location: Location)
     func displaySelectedLocation(_ location: Location?)
 }

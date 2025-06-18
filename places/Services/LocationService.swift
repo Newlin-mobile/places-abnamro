@@ -1,37 +1,14 @@
 import Foundation
 
 protocol LocationServiceProtocol {
-    func fetchLocations() async -> Result<[Location], Error>
+    func fetchLocations() async -> Result<[Location], ErrorWrapper>
 }
 
-@MainActor
-class LocationService: ObservableObject, LocationServiceProtocol {
-   // @Published var locations: [Location] = []
-  //  @Published var errorMessage: ErrorWrapper? = nil
+class LocationService: LocationServiceProtocol {
 
     private let url = URL(string: "https://raw.githubusercontent.com/abnamrocoesd/assignment-ios/main/locations.json")!
 
-    // For VIP Clean
-   /* func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void) {
-        let url = self.url
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                let wrapper = try JSONDecoder().decode(LocationsWrapper.self, from: data)
-                let locations = wrapper.locations
-                DispatchQueue.main.async {
-                    completion(.success(locations))
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
-            }
-        }
-    }*/
-
-    // Keep async version for backwards compatibility
-    func fetchLocations() async -> Result<[Location], Error> {
+    func fetchLocations() async -> Result<[Location], ErrorWrapper> {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let wrapper = try JSONDecoder().decode(LocationsWrapper.self, from: data)

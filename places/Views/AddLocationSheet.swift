@@ -19,15 +19,19 @@ struct AddLocationSheet: View {
             Text("Add New Location")
                 .font(.headline)
             TextField("Name", text: $newLocationName)
+                .accessibilityLabel("Location name")
+                .accessibilityHint("Enter the name for the new location")
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
                 .focused($isNameFieldFocused)
                 .submitLabel(.done)
             HStack {
                 Button("Cancel") { onCancel() }
+                    .accessibilityHint("Cancels adding a new location")
                 Spacer()
                 Button("Add") { onAdd() }
                     .disabled(newLocationName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityHint("Adds the new location")
             }
             .padding([.leading, .trailing, .bottom])
         }

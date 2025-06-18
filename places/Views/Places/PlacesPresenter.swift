@@ -19,7 +19,7 @@ class PlacesPresenter: PlacesPresentationLogic {
         }
     }
     
-    func presentError(_ error: Error) {
-        view?.displayError(error.localizedDescription)
+    func presentError(_ error: ErrorWrapper) {
+        view?.displayError(error)
     }
 }
